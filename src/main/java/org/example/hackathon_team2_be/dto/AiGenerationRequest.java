@@ -8,6 +8,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public class AiGenerationRequest {
+    //백엔드 1 -> 백엔드 2 요청
 
     private Product product;
 

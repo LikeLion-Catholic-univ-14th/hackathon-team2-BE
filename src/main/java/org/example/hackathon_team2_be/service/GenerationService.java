@@ -61,6 +61,7 @@ public class GenerationService {
 
     }
 
+    // AI 생성 결과 조회
     @Transactional(readOnly = true)
     public GenerationResponse getGeneration(Long generationId){
 
@@ -82,6 +83,8 @@ public class GenerationService {
         return null;
     }
 
+
+    //AI 생성 결과 받는 부분
     @Transactional
     public void completeGeneration(
             Long generationId,

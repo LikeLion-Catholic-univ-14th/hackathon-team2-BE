@@ -37,7 +37,7 @@ public class Generation {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "saved_at")
+    @Column(name = "saved_at") //Future Archive에 저장했는지 여부
     private LocalDateTime savedAt;
 
     @Column(name = "created_at")
@@ -65,6 +65,9 @@ public class Generation {
 
     public void fail() {
         this.status = GenerationStatus.FAILED;
+    }
+    public void save() {
+        this.savedAt = LocalDateTime.now();
     }
 
 }
