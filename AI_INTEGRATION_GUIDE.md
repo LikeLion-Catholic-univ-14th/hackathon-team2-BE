@@ -1,7 +1,7 @@
-# 🤖 MCM TIME PORTAL 2076 - 백엔드 2 AI 생성 모듈 연동 가이드
+# 🤖 MCM TIME PORTAL 2076 - AI 생성 모듈 연동 가이드
 
 ## 1. 개요
-백엔드 2가 구현한 `GenerationController` 및 `GenerationService` 연동 가이드 문서입니다.
+`GenerationController` 및 `GenerationService` 연동 가이드 문서입니다.
 
 ---
 
