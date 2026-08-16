@@ -30,10 +30,14 @@ public class GenerationService {
 
             log.info("Successfully generated future product with OpenAI: {}", openAiResult.getProductName());
 
+            String imageUrl = (openAiResult.getImageUrl() != null && !openAiResult.getImageUrl().isBlank())
+                    ? openAiResult.getImageUrl()
+                    : "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=1000&auto=format&fit=crop";
+
             return GenerationResponseDto.builder()
                     .productName(openAiResult.getProductName())
                     .category(openAiResult.getCategory())
-                    .imageUrl("https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=1000&auto=format&fit=crop")
+                    .imageUrl(imageUrl)
                     .description(openAiResult.getDescription())
                     .build();
 

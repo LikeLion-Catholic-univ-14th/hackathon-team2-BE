@@ -12,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,22 +23,26 @@ public class OpenAiClient {
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final String apiKey;
+    private final String model;
 
     public OpenAiClient(
             @Value("${ai.openai.api-key:}") String apiKey,
+            @Value("${ai.openai.base-url:https://generativelanguage.googleapis.com/v1beta/openai}") String baseUrl,
+            @Value("${ai.openai.model:gemini-1.5-flash}") String model,
             @Autowired(required = false) ObjectMapper objectMapper
     ) {
         this.apiKey = apiKey;
+        this.model = model;
         this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
         this.restClient = RestClient.builder()
-                .baseUrl("https://api.openai.com/v1")
+                .baseUrl(baseUrl)
                 .build();
     }
 
     public OpenAiResultDto generateProductDesign(GenerationRequestDto request) {
-        if (apiKey == null || apiKey.isBlank() || apiKey.contains("YOUR_ACTUAL_OPENAI_API_KEY")) {
-            log.warn("OpenAI API Key is missing or invalid. Skipping OpenAI API call.");
-            throw new IllegalStateException("OpenAI API Key is not configured.");
+        if (apiKey == null || apiKey.isBlank() || apiKey.contains("YOUR_ACTUAL")) {
+            log.warn("AI API Key is missing or invalid. Skipping AI API call.");
+            throw new IllegalStateException("AI API Key is not configured.");
         }
 
         String systemPrompt = """
@@ -51,22 +54,22 @@ public class OpenAiClient {
                 2. The response must contain the following keys:
                    - "productName": A stylish, high-fashion product name combining the base product name, futuristic English keywords, and '2076' (e.g., "MCM AERO STARK 2076").
                    - "category": An elegant, futuristic product category name in English (e.g., "Adaptive Space Mobility Bag").
+                   - "imageUrl": A representative high-fashion futuristic product image URL (or a stylized Unsplash placeholder URL related to luxury fashion/futuristic design).
                    - "description": A 2 to 3 sentence luxurious storytelling description in Korean. Explain seamlessly how the chosen MCM heritage DNA and the 2076 environment interact. Use a refined, premium fashion brand tone.
-                   - "imagePromptEn": A highly detailed, professional visual prompt in English for DALL-E 3 image generation. Describe colors (cognac, cyan hologram), materials, lightings, and 2076 futuristic MCM aesthetic.
 
                 [JSON Output Format]
                 {
                   "productName": "...",
                   "category": "...",
-                  "description": "...",
-                  "imagePromptEn": "..."
+                  "imageUrl": "...",
+                  "description": "..."
                 }
                 """;
 
         String userPrompt = buildUserPrompt(request);
 
         Map<String, Object> requestBody = Map.of(
-                "model", "gpt-4o-mini",
+                "model", model,
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", userPrompt)
@@ -74,7 +77,7 @@ public class OpenAiClient {
                 "response_format", Map.of("type", "json_object")
         );
 
-        log.info("Sending request to OpenAI API (model: gpt-4o-mini)...");
+        log.info("Sending request to AI API (model: {})...", model);
 
         String responseString = restClient.post()
                 .uri("/chat/completions")
@@ -87,11 +90,11 @@ public class OpenAiClient {
         try {
             JsonNode root = objectMapper.readTree(responseString);
             String jsonContent = root.path("choices").get(0).path("message").path("content").asText();
-            log.info("Received GPT JSON Response: {}", jsonContent);
+            log.info("Received AI JSON Response: {}", jsonContent);
             return objectMapper.readValue(jsonContent, OpenAiResultDto.class);
         } catch (Exception e) {
-            log.error("Failed to parse OpenAI API response", e);
-            throw new RuntimeException("Parsing OpenAI response failed", e);
+            log.error("Failed to parse AI API response", e);
+            throw new RuntimeException("Parsing AI response failed", e);
         }
     }
 

@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GenerationControllerTest {
 
-    private final OpenAiClient openAiClient = new OpenAiClient("", new ObjectMapper());
+    private final OpenAiClient openAiClient = new OpenAiClient("", "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-1.5-flash", new ObjectMapper());
     private final GenerationService generationService = new GenerationService(openAiClient);
     private final GenerationController generationController = new GenerationController(generationService);
 
