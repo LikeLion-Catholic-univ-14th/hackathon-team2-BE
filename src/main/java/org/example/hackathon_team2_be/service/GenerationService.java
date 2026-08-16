@@ -1,17 +1,19 @@
 package org.example.hackathon_team2_be.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.hackathon_team2_be.domain.Generation;
-import org.example.hackathon_team2_be.domain.GenerationLockedDna;
-import org.example.hackathon_team2_be.domain.GenerationStatus;
+import org.example.hackathon_team2_be.domain.*;
 import org.example.hackathon_team2_be.dto.AiGenerationResponse;
 import org.example.hackathon_team2_be.dto.GenerationCreateRequest;
 import org.example.hackathon_team2_be.dto.GenerationCreateResponse;
 import org.example.hackathon_team2_be.dto.GenerationResponse;
+import org.example.hackathon_team2_be.repository.FutureContextRepository;
 import org.example.hackathon_team2_be.repository.GenerationLockedDnaRepository;
 import org.example.hackathon_team2_be.repository.GenerationRepository;
+import org.example.hackathon_team2_be.repository.HeritageDnaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,13 +21,15 @@ public class GenerationService {
 
     private final GenerationRepository generationRepository;
     private final GenerationLockedDnaRepository generationLockedDnaRepository;
+    private final HeritageDnaRepository heritageDnaRepository;
+    private final FutureContextRepository futureContextRepository;
 
+
+    //생성 요청
     @Transactional
     public GenerationCreateResponse createGeneration(GenerationCreateRequest request){
-        // TODO
-        // ArchiveProduct 조회
-        // FutureContext 조회
-        // HeritageDna 조회
+
+        //generation 생성
         Generation generation = new Generation(
                 request.getArchiveProductId(),
                 request.getFutureContextId()
@@ -43,19 +47,6 @@ public class GenerationService {
             );
         }
 
-        /*
-         * TODO
-         *
-         * DB에서 조회한 실제 데이터를
-         * AiGenerationRequest로 만들어서
-         * 백엔드 2에 전달.
-         *
-         * 백엔드 2의 AI 생성은 여기서 하지 않음.
-         *
-         * 백엔드 2가 생성 결과를 다시 보내오면
-         * Generation.complete()을 호출해서
-         * DB를 COMPLETED로 변경.
-         */
 
         return GenerationCreateResponse.from(generation);
 
@@ -72,15 +63,44 @@ public class GenerationService {
                                 "생성 결과를 찾을 수 없습니다."
                         )
                 );
-
+        // 아직 생성 중
         if (generation.getStatus() == GenerationStatus.GENERATING) {
             return GenerationResponse.generating(generation);
         }
 
-        // TODO
-        // COMPLETED / FAILED 결과 응답 구현
+        // 생성 실패
+        if (generation.getStatus() == GenerationStatus.FAILED) {
+            return GenerationResponse.failed(generation, "생성에 실패했습니다");
+        }
 
-        return null;
+        //생성 완료
+        List<GenerationLockedDna> lockedDnas =
+                generationLockedDnaRepository.findAllByIdGenerationId(generation.getId());
+
+
+        List<String> lockedDnaNames = lockedDnas.stream()
+                .map(dna -> heritageDnaRepository.findById(
+                        dna.getId().getHeritageDnaId()
+                ))
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
+                .map(HeritageDna::getName)
+                .toList();
+
+        FutureContext futureContext =
+                futureContextRepository.findById(
+                        generation.getFutureContextId()
+                ).orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Future Context를 찾을 수 없습니다."
+                        )
+                );
+
+        return GenerationResponse.completed(
+                generation,
+                lockedDnaNames,
+                futureContext.getName()
+        );
     }
 
 

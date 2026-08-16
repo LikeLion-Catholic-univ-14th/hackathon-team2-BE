@@ -3,6 +3,7 @@ package org.example.hackathon_team2_be.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.hackathon_team2_be.dto.ApiResponse;
 import org.example.hackathon_team2_be.dto.FutureArchiveListResponse;
+import org.example.hackathon_team2_be.dto.FutureArchiveResponse;
 import org.example.hackathon_team2_be.dto.GenerationResponse;
 import org.example.hackathon_team2_be.service.FutureArchiveService;
 import org.springframework.http.ResponseEntity;
@@ -38,29 +39,28 @@ public class FutureArchiveController {
 
     // Future Archive 목록 조회
     @GetMapping("/future-archives")
-    public ResponseEntity<ApiResponse<Map<String, List<FutureArchiveListResponse>>>> getFutureArchives() {
-
-        List<FutureArchiveListResponse> archives =
-                futureArchiveService.getFutureArchives();
+    public ResponseEntity<FutureArchiveListResponse> getFutureArchives() {
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        Map.of("archives", archives)
-                )
+                futureArchiveService.getFutureArchives()
         );
     }
 
     // Future Archive 상세 조회
     @GetMapping("/future-archives/{id}")
-    public ResponseEntity<ApiResponse<GenerationResponse>> getFutureArchive(
-            @PathVariable Long id
+    public ResponseEntity<GenerationResponse> getFutureArchive(
+            @PathVariable Long generationId
     ) {
 
-        GenerationResponse response =
-                futureArchiveService.getFutureArchive(id);
-
         return ResponseEntity.ok(
-                ApiResponse.success(response)
+                futureArchiveService.getFutureArchive(generationId)
         );
+    }
+
+    // 저장 응답 DTO
+    private record SaveResponse(
+            boolean success,
+            Long futureArchiveId
+    ) {
     }
 }

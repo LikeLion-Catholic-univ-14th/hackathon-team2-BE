@@ -1,17 +1,22 @@
 package org.example.hackathon_team2_be.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.hackathon_team2_be.domain.Generation;
-import org.example.hackathon_team2_be.domain.GenerationLockedDna;
-import org.example.hackathon_team2_be.domain.GenerationStatus;
+import org.example.hackathon_team2_be.domain.*;
+import org.example.hackathon_team2_be.dto.ArchiveInsight;
 import org.example.hackathon_team2_be.dto.FutureArchiveListResponse;
+import org.example.hackathon_team2_be.dto.FutureArchiveResponse;
 import org.example.hackathon_team2_be.dto.GenerationResponse;
+import org.example.hackathon_team2_be.repository.FutureContextRepository;
 import org.example.hackathon_team2_be.repository.GenerationLockedDnaRepository;
 import org.example.hackathon_team2_be.repository.GenerationRepository;
+import org.example.hackathon_team2_be.repository.HeritageDnaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +24,8 @@ public class FutureArchiveService {
 
     private final GenerationRepository generationRepository;
     private final GenerationLockedDnaRepository generationLockedDnaRepository;
+    private final HeritageDnaRepository heritageDnaRepository;
+    private final FutureContextRepository  futureContextRepository;
 
     // Future Archive 저장
     @Transactional
@@ -36,39 +43,84 @@ public class FutureArchiveService {
 
     //Future Archive 목록 조회
     @Transactional(readOnly = true)
-    public List<FutureArchiveListResponse> getFutureArchives() {
+    public FutureArchiveListResponse getFutureArchives() {
 
         List<Generation> generations =
                 generationRepository.findAllBySavedAtIsNotNullOrderBySavedAtDesc();
 
-        return generations.stream()
+        List<FutureArchiveResponse> archives = generations.stream()
                 .map(generation -> {
 
+                    // 해당 generation의 locked DNA 조회
                     List<GenerationLockedDna> lockedDnas =
                             generationLockedDnaRepository
                                     .findAllByIdGenerationId(generation.getId());
 
                     List<String> lockedDnaNames = lockedDnas.stream()
-                            // TODO:
-                            // HeritageDnaRepository를 연결한 뒤
-                            // DNA 이름으로 변환
-                            .map(dna -> "TODO")
+                            .map(dna -> heritageDnaRepository.findById(
+                                    dna.getId().getHeritageDnaId()
+                            ))
+                            .filter(java.util.Optional::isPresent)
+                            .map(java.util.Optional::get)
+                            .map(HeritageDna::getName)
                             .toList();
 
-                    // TODO:
-                    // FutureContextRepository를 연결한 뒤
-                    // FutureContext 이름 조회
+                    // Future Context 조회
+                    FutureContext futureContext =
+                            futureContextRepository.findById(
+                                    generation.getFutureContextId()
+                            ).orElseThrow(() ->
+                                    new IllegalArgumentException(
+                                            "Future Context를 찾을 수 없습니다."
+                                    )
+                            );
 
-                    return new FutureArchiveListResponse(
+                    return new FutureArchiveResponse(
                             generation.getId(),
                             generation.getProductName(),
                             generation.getImageUrl(),
-                            "TODO",
+                            futureContext.getName(),
                             lockedDnaNames,
                             generation.getSavedAt()
                     );
                 })
                 .toList();
+
+        // 가장 많이 선택된 DNA
+        String mostSelectedDna = archives.stream()
+                .flatMap(archive -> archive.getLockedDna().stream())
+                .collect(Collectors.groupingBy(
+                        Function.identity(),
+                        Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
+
+        // 가장 많이 선택된 Future Context
+        String mostPopularFutureContext = archives.stream()
+                .map(FutureArchiveResponse::getFutureContext)
+                .collect(Collectors.groupingBy(
+                        Function.identity(),
+                        Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
+
+        ArchiveInsight archiveInsight = new ArchiveInsight(
+                mostSelectedDna,
+                mostPopularFutureContext
+        );
+
+        return new FutureArchiveListResponse(
+                archives,
+                archiveInsight
+        );
     }
 
     // Future Archive 상세 조회

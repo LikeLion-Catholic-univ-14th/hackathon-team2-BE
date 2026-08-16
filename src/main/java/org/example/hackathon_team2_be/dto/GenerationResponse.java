@@ -60,7 +60,6 @@ public class GenerationResponse {
     }
 
     // 생성 실패
-    // 생성 실패
     public static GenerationResponse failed(
             Generation generation,
             String message
