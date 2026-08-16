@@ -1,5 +1,7 @@
 package org.example.hackathon_team2_be.generation;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.hackathon_team2_be.generation.client.OpenAiClient;
 import org.example.hackathon_team2_be.generation.controller.GenerationController;
 import org.example.hackathon_team2_be.generation.dto.ContextDto;
 import org.example.hackathon_team2_be.generation.dto.DnaDto;
@@ -16,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GenerationControllerTest {
 
-    private final GenerationService generationService = new GenerationService();
+    private final OpenAiClient openAiClient = new OpenAiClient("", new ObjectMapper());
+    private final GenerationService generationService = new GenerationService(openAiClient);
     private final GenerationController generationController = new GenerationController(generationService);
 
     @Test
