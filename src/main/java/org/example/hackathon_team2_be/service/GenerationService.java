@@ -6,14 +6,12 @@ import org.example.hackathon_team2_be.dto.AiGenerationResponse;
 import org.example.hackathon_team2_be.dto.GenerationCreateRequest;
 import org.example.hackathon_team2_be.dto.GenerationCreateResponse;
 import org.example.hackathon_team2_be.dto.GenerationResponse;
-import org.example.hackathon_team2_be.repository.FutureContextRepository;
-import org.example.hackathon_team2_be.repository.GenerationLockedDnaRepository;
-import org.example.hackathon_team2_be.repository.GenerationRepository;
-import org.example.hackathon_team2_be.repository.HeritageDnaRepository;
+import org.example.hackathon_team2_be.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +19,7 @@ public class GenerationService {
 
     private final GenerationRepository generationRepository;
     private final GenerationLockedDnaRepository generationLockedDnaRepository;
+    private final ArchiveProductRepository archiveProductRepository;
     private final HeritageDnaRepository heritageDnaRepository;
     private final FutureContextRepository futureContextRepository;
 
@@ -29,20 +28,36 @@ public class GenerationService {
     @Transactional
     public GenerationCreateResponse createGeneration(GenerationCreateRequest request){
 
+        //상품 조회
+        ArchiveProduct product = archiveProductRepository.findById(request.getArchiveProductId()).
+                orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        //futureContext 조회
+        FutureContext futureContext = futureContextRepository
+                .findById(request.getFutureContextId()).orElseThrow(() -> new IllegalArgumentException("Future Context를 찾을 수 없습니다."));
+
+
         //generation 생성
         Generation generation = new Generation(
-                request.getArchiveProductId(),
-                request.getFutureContextId()
+                product.getId(),
+                futureContext.getId()
         );
 
         generationRepository.save(generation);
 
+        //선택된 dna 저장
         for (Long dnaId : request.getLockedDnaIds()) {
+
+            HeritageDna dna = heritageDnaRepository
+                    .findById(dnaId)
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException("heritage dna를 찾을 수 없습니다."));
+
 
             generationLockedDnaRepository.save(
                     new GenerationLockedDna(
                             generation.getId(),
-                            dnaId
+                            dna.getId()
                     )
             );
         }
