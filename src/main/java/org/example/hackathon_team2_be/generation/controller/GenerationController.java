@@ -2,15 +2,15 @@ package org.example.hackathon_team2_be.generation.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.hackathon_team2_be.dto.ApiResponse;
+import org.example.hackathon_team2_be.dto.GenerationCreateRequest;
+import org.example.hackathon_team2_be.dto.GenerationCreateResponse;
+import org.example.hackathon_team2_be.dto.GenerationResponse;
 import org.example.hackathon_team2_be.generation.dto.GenerationRequestDto;
 import org.example.hackathon_team2_be.generation.dto.GenerationResponseDto;
 import org.example.hackathon_team2_be.generation.service.GenerationService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class GenerationController {
 
     private final GenerationService generationService;
+    private final org.example.hackathon_team2_be.service.GenerationService generationDbService;
 
     @PostMapping("/{generationId}/result")
     public ResponseEntity<GenerationResponseDto> generateResult(
@@ -34,5 +35,28 @@ public class GenerationController {
             GenerationResponseDto fallbackResponse = generationService.buildFallbackResponse(request);
             return ResponseEntity.ok(fallbackResponse);
         }
+    }
+
+    //추가
+    @PostMapping
+    public ResponseEntity<ApiResponse<GenerationCreateResponse>> createGeneration(
+            @RequestBody GenerationCreateRequest request
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        generationDbService.createGeneration(request)
+                )
+        );
+    }
+
+    @GetMapping("/{generationId}")
+    public ResponseEntity<ApiResponse<GenerationResponse>> getGeneration(
+            @PathVariable Long generationId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        generationDbService.getGeneration(generationId)
+                )
+        );
     }
 }
