@@ -57,10 +57,4 @@ public class FutureArchiveController {
         );
     }
 
-    // 저장 응답 DTO
-    private record SaveResponse(
-            boolean success,
-            Long futureArchiveId
-    ) {
-    }
 }

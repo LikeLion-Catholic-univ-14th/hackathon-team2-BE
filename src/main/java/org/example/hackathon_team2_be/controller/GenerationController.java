@@ -35,6 +35,7 @@ public class GenerationController {
         );
     }
 
+    /*
     @PostMapping("/{generationId}/result")
     public ResponseEntity<Void> receiveGenerationResult(
             @PathVariable Long generationId,
@@ -47,5 +48,7 @@ public class GenerationController {
 
         return ResponseEntity.ok().build();
     }
+    */
+
 
 }
