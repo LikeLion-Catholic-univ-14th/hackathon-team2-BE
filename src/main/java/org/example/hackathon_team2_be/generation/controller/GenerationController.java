@@ -9,6 +9,7 @@ import org.example.hackathon_team2_be.dto.GenerationResponse;
 import org.example.hackathon_team2_be.generation.dto.GenerationRequestDto;
 import org.example.hackathon_team2_be.generation.dto.GenerationResponseDto;
 import org.example.hackathon_team2_be.generation.service.GenerationService;
+import org.example.hackathon_team2_be.service.GenerationDbService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class GenerationController {
 
     private final GenerationService generationService;
-    private final org.example.hackathon_team2_be.service.GenerationService generationDbService;
+    private final GenerationDbService generationDbService;
 
     @PostMapping("/{generationId}/result")
     public ResponseEntity<GenerationResponseDto> generateResult(

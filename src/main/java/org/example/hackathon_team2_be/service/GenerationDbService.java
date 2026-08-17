@@ -15,7 +15,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class GenerationService {
+public class GenerationDbService {
 
     private final GenerationRepository generationRepository;
     private final GenerationLockedDnaRepository generationLockedDnaRepository;
