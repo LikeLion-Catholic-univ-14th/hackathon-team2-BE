@@ -1,11 +1,19 @@
 spring:
+  application:
+    name: hackathon_team2_be
   datasource:
     url: jdbc:mysql://localhost:3306/hackathon_2
     username: root
-    password: ${DB_PASSWORD}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+ai:
+  openai:
+    api-key: ${GEMINI_API_KEY:${OPENAI_API_KEY:}}
+    base-url: ${AI_BASE_URL:https://generativelanguage.googleapis.com/v1beta/openai}
+    model: ${AI_MODEL:gemini-1.5-flash}
