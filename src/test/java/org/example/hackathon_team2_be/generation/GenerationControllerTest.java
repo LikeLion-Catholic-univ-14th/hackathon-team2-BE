@@ -1,6 +1,7 @@
 package org.example.hackathon_team2_be.generation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.hackathon_team2_be.generation.client.GeminiImageClient;
 import org.example.hackathon_team2_be.generation.client.OpenAiClient;
 import org.example.hackathon_team2_be.generation.controller.GenerationController;
 import org.example.hackathon_team2_be.generation.dto.ContextDto;
@@ -19,7 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GenerationControllerTest {
 
     private final OpenAiClient openAiClient = new OpenAiClient("", "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-1.5-flash", new ObjectMapper());
-    private final GenerationService generationService = new GenerationService(openAiClient);
+    private final GeminiImageClient geminiImageClient = new GeminiImageClient("", "https://generativelanguage.googleapis.com/v1beta", "gemini-2.5-flash-image", new ObjectMapper());
+    private final GenerationService generationService = new GenerationService(openAiClient, geminiImageClient);
     private final GenerationController generationController = new GenerationController(generationService, null);
 
     @Test

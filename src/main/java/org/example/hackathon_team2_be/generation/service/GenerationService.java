@@ -2,6 +2,7 @@ package org.example.hackathon_team2_be.generation.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.hackathon_team2_be.generation.client.GeminiImageClient;
 import org.example.hackathon_team2_be.generation.client.OpenAiClient;
 import org.example.hackathon_team2_be.generation.dto.DnaDto;
 import org.example.hackathon_team2_be.generation.dto.GenerationRequestDto;
@@ -21,37 +22,47 @@ import java.util.stream.Collectors;
 public class GenerationService {
 
     private final OpenAiClient openAiClient;
+    private final GeminiImageClient geminiImageClient;
 
-    // AI 미래 제품 생성 함수 (OpenAI 연동 및 Fallback)
+    // AI 미래 제품 생성 함수 (AI 기획 + 이미지 생성 및 스마트 폴백)
     public GenerationResponseDto generateFutureProduct(GenerationRequestDto request) {
         log.info("Starting future product generation. Request: {}", request);
 
+        OpenAiResultDto openAiResult = null;
+
+        // 1. AI 디자인 기획 및 영문 프롬프트 생성 (텍스트 생성)
         try {
-            // OpenAI API 호출
-            OpenAiResultDto openAiResult = openAiClient.generateProductDesign(request);
-
-            log.info("Successfully generated future product with OpenAI: {}", openAiResult.getProductName());
-
-            String imageUrl = buildPollinationsImageUrl(openAiResult.getImagePrompt());
-
-            return GenerationResponseDto.builder()
-                    .productName(openAiResult.getProductName())
-                    .category(openAiResult.getCategory())
-                    .imageUrl(imageUrl)
-                    .description(openAiResult.getDescription())
-                    .build();
-
+            openAiResult = openAiClient.generateProductDesign(request);
+            log.info("Successfully generated future product design with AI: {}", openAiResult != null ? openAiResult.getProductName() : "null");
         } catch (Exception e) {
-            log.error("Error occurred during AI product generation. Returning Fallback response.", e);
+            log.warn("AI design planning failed. Returning fallback response: {}", e.getMessage());
             return buildFallbackResponse(request);
         }
+
+        // 1단계 실패 시 전체 Fallback 반환
+        if (openAiResult == null) {
+            log.warn("AI design planning returned null. Returning fallback response.");
+            return buildFallbackResponse(request);
+        }
+
+        // 2. Pollinations AI (FLUX Realism 모델) 무료 실시간 고화질 이미지 URL 생성
+        String imageUrl = buildPollinationsImageUrl(openAiResult.getImagePrompt());
+        log.info("Successfully generated real-time FLUX image URL: {}", imageUrl);
+
+        // 3. 최종 응답 반환
+        return GenerationResponseDto.builder()
+                .productName(openAiResult.getProductName())
+                .category(openAiResult.getCategory())
+                .imageUrl(imageUrl)
+                .description(openAiResult.getDescription())
+                .build();
     }
 
     // 영문 묘사문(Prompt)을 기반으로 Pollinations AI (FLUX Realism 모델) 실시간 이미지 URL 조합
     private String buildPollinationsImageUrl(String prompt) {
         String effectivePrompt = (prompt != null && !prompt.isBlank())
                 ? prompt
-                : "A standalone futuristic luxury MCM backpack in year 2076 centered on a sleek minimalist white pedestal, classic cognac Visetos monogram leather, translucent polymer, subtle glowing cyan accents, bright clean studio backdrop, soft diffused studio lighting, photorealistic 8k, crisp commercial product photography, no humans";
+                : "Commercial studio packshot of an empty standalone evolved 2076 MCM Ottomar Weekender bag resting on a sleek minimalist white pedestal, strictly zero humans, no people, no models. Bright minimalist white studio backdrop with soft sky-blue and subtle violet pastel ambient lighting. The bag retains the classic Cognac Visetos luggage silhouette, enhanced with zero-gravity magnetic handles, carbon-fiber frame, and cyan glowing monogram seams, crisp focus, photorealistic, 8k --ar 1:1";
 
         try {
             String encodedPrompt = URLEncoder.encode(effectivePrompt, StandardCharsets.UTF_8).replace("+", "%20");
@@ -97,8 +108,8 @@ public class GenerationService {
         String dnaSummary = extractDnaSummary(request);
 
         String fallbackPrompt = String.format(
-                "A standalone futuristic luxury MCM %s in 2076 %s environment centered on a sleek minimalist white pedestal, %s, translucent tech materials, bright clean studio backdrop with subtle cyan ambient glow, soft diffused lighting, photorealistic 8k, crisp commercial product photography, no humans",
-                baseName, contextName, dnaSummary
+                "Commercial hero product shot of an empty standalone futuristic 2076 MCM %s levitating against a clean white studio backdrop glowing with soft purple and cyan ambient light, strictly zero humans, no models. The %s silhouette is enhanced for %s with carbon-fiber structure, subtle glowing Visetos monogram pattern, and titanium hardware, crisp focus, photorealistic, 8k --ar 1:1",
+                baseName, dnaSummary, contextName
         );
         String imageUrl = buildPollinationsImageUrl(fallbackPrompt);
 

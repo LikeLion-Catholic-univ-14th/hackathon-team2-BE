@@ -54,7 +54,18 @@ public class OpenAiClient {
                 2. The response must contain the following keys:
                    - "productName": A stylish, high-fashion product name combining the base product name, futuristic English keywords, and '2076' (e.g., "MCM AERO STARK 2076").
                    - "category": An elegant, futuristic product category name in English (e.g., "Adaptive Space Mobility Bag").
-                   - "imagePrompt": A single flowing natural English description. MUST strictly start with: "Commercial studio product packshot of an empty standalone product resting on a minimalist white pedestal, strictly zero humans, no people, no models, no mannequin, no hands." Then describe the product details: blend classic cognac MCM Visetos monogram leather with futuristic translucent polymer, neon piping, matte carbon fiber, and titanium hardware based on user choices, in a clean white studio with soft diffused lighting and subtle cyan glow. High-end 8k commercial product photography.
+                   - "imagePrompt": Generate a concise English prompt for Pollinations AI (FLUX) to create an empty standalone futuristic 2076 MCM product packshot based on a real archive item.
+                     [CRITICAL REQUIREMENT - STRICTLY ZERO HUMANS]
+                     ABSOLUTELY NO HUMANS, no people, no models, no mannequin, no faces, no hands, no body parts, no holding, no wearing. The image MUST EXCLUSIVELY depict the empty standalone product itself.
+                     [Generation Rules for imagePrompt]
+                     1. Background & Lighting (STRICT): Bright, ultra-clean white/light-grey fashion studio backdrop illuminated with soft, subtle sky-blue, purple, and cyan pastel ambient light reflections.
+                     2. Base Structure & Evolution: Retain the iconic silhouette of the Base Archive Product, but enhance and evolve it for 2076 by adding futuristic tech components (e.g., dynamic magnetic straps, glowing cybernetic Visetos seams, holographic trims, matte titanium buckles, carbon-fiber frame).
+                     3. DNA Integration: Highlight the top-weighted DNA (e.g., Cognac Visetos leather base, illuminated metal studs, or vibrant accent colors) as key design accents.
+                     4. Framing & Composition: 1:1 square aspect ratio. Centered standalone product hero packshot resting on a sleek white minimalist pedestal or floating smoothly in zero-gravity. Sharp focus on product materials and textures.
+                     5. Quality Keywords: Commercial product photography, standalone luxury product packshot, photorealistic, 8k resolution, crisp studio lighting, clean bright aesthetics, zero humans, no people --ar 1:1
+                     [Examples]
+                     - "Commercial studio packshot of an empty standalone evolved 2076 MCM Ottomar Weekender bag resting on a sleek minimalist white pedestal, strictly zero humans, no people, no models. Bright minimalist white studio backdrop with soft sky-blue and subtle violet pastel ambient lighting. The bag retains the classic Cognac Visetos luggage silhouette, enhanced with zero-gravity magnetic handles, carbon-fiber frame, and cyan glowing monogram seams, crisp focus, photorealistic, 8k --ar 1:1"
+                     - "Commercial hero product shot of an empty standalone futuristic 2076 MCM Stark Backpack levitating against a clean white studio backdrop glowing with soft purple and cyan ambient light, strictly zero humans, no models. The black Visetos leather base is upgraded with illuminated blue pyramid studs, titanium dynamic shoulder harnesses, and cybernetic accents, crisp focus, photorealistic, 8k --ar 1:1"
                    - "description": A 2 to 3 sentence luxurious storytelling description in Korean. Explain seamlessly how the chosen MCM heritage DNA and the 2076 environment interact. Use a refined, premium fashion brand tone.
 
                 [JSON Output Format]
@@ -95,6 +106,44 @@ public class OpenAiClient {
         } catch (Exception e) {
             log.error("Failed to parse AI API response", e);
             throw new RuntimeException("Parsing AI response failed", e);
+        }
+    }
+
+    /**
+     * OpenAI 공식 DALL-E 3 이미지 생성 API 호출
+     */
+    public String generateDalleImage(String imagePrompt) {
+        if (apiKey == null || apiKey.isBlank() || apiKey.contains("YOUR_ACTUAL")) {
+            log.warn("AI API Key is missing or invalid for DALL-E 3.");
+            throw new IllegalStateException("AI API Key is not configured for DALL-E 3.");
+        }
+
+        Map<String, Object> requestBody = Map.of(
+                "model", "dall-e-3",
+                "prompt", imagePrompt,
+                "n", 1,
+                "size", "1024x1024",
+                "quality", "standard"
+        );
+
+        log.info("Sending request to OpenAI DALL-E 3 API with prompt: {}", imagePrompt);
+
+        try {
+            String responseString = restClient.post()
+                    .uri("/images/generations")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode root = objectMapper.readTree(responseString);
+            String imageUrl = root.path("data").get(0).path("url").asText();
+            log.info("Successfully generated image with DALL-E 3: {}", imageUrl);
+            return imageUrl;
+        } catch (Exception e) {
+            log.error("Failed to generate image with DALL-E 3", e);
+            throw new RuntimeException("DALL-E 3 generation failed", e);
         }
     }
 
