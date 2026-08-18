@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class OpenAiResultDto {
     private String productName;
     private String category;
-    private String imageUrl;
+    private String imagePrompt;
     private String description;
 }
