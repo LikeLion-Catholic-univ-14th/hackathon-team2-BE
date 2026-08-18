@@ -24,9 +24,15 @@ public class GenerationService {
     private final OpenAiClient openAiClient;
     private final GeminiImageClient geminiImageClient;
 
-    // AI 미래 제품 생성 함수 (AI 기획 + 이미지 생성 및 스마트 폴백)
+    // AI 미래 제품 생성 함수 (특정 시나리오 프리셋 매핑 + AI 기획 및 스마트 폴백)
     public GenerationResponseDto generateFutureProduct(GenerationRequestDto request) {
         log.info("Starting future product generation. Request: {}", request);
+
+        // 0. 특정 시나리오 프리셋 매칭 검사 (시연용 고화질 사전 제작 이미지 및 텍스트 매핑)
+        GenerationResponseDto presetResponse = findPresetScenario(request);
+        if (presetResponse != null) {
+            return presetResponse;
+        }
 
         OpenAiResultDto openAiResult = null;
 
@@ -101,8 +107,32 @@ public class GenerationService {
         return "Visetos, Mobility";
     }
 
+    // 특정 시나리오 프리셋 매핑 (시연용 사전 제작 이미지 및 기획 텍스트)
+    private GenerationResponseDto findPresetScenario(GenerationRequestDto request) {
+        String productName = extractProductName(request);
+        String contextName = extractContextName(request);
+
+        // 시나리오 1: Stark 백팩 계열 + Space Travel
+        if (productName.toLowerCase().contains("stark") && contextName.toLowerCase().contains("space")) {
+            log.info("Matching preset scenario found for [Stark + Space Travel]. Returning high-quality pre-generated response.");
+            return GenerationResponseDto.builder()
+                    .productName("MCM AERO STARK 2076")
+                    .category("Gravity-Defying Space Backpack")
+                    .imageUrl("/images/mcm_aero_stark_2076.png")
+                    .description("MCM AERO STARK 2076은 클래식 코냑 비제토스 패턴을 기반으로 미래의 우주 여행 환경에 적합하게 재설계되었습니다. 인체공학적 수납과 가벼운 착용감을 유지하면서, 무중력 환경에서 공간을 효율적으로 활용할 수 있도록 혁신적인 기술 요소가 통합되어 있습니다.")
+                    .build();
+        }
+
+        return null;
+    }
+
     // Fallback
     public GenerationResponseDto buildFallbackResponse(GenerationRequestDto request) {
+        GenerationResponseDto presetResponse = findPresetScenario(request);
+        if (presetResponse != null) {
+            return presetResponse;
+        }
+
         String baseName = extractProductName(request);
         String contextName = extractContextName(request);
         String dnaSummary = extractDnaSummary(request);

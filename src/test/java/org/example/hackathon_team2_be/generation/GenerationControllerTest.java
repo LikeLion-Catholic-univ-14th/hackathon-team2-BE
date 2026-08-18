@@ -51,9 +51,9 @@ class GenerationControllerTest {
         assertThat(responseEntity.getStatusCode().value()).isEqualTo(200);
         GenerationResponseDto body = responseEntity.getBody();
         assertThat(body).isNotNull();
-        assertThat(body.getProductName()).contains("MCM AERO STARK 2076");
-        assertThat(body.getCategory()).contains("Adaptive Space Travel Gear");
-        assertThat(body.getImageUrl()).isNotEmpty();
-        assertThat(body.getDescription()).contains("Visetos");
+        assertThat(body.getProductName()).isEqualTo("MCM AERO STARK 2076");
+        assertThat(body.getCategory()).isEqualTo("Gravity-Defying Space Backpack");
+        assertThat(body.getImageUrl()).isEqualTo("/images/mcm_aero_stark_2076.png");
+        assertThat(body.getDescription()).contains("비제토스");
     }
 }
