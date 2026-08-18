@@ -54,7 +54,7 @@ public class OpenAiClient {
                 2. The response must contain the following keys:
                    - "productName": A stylish, high-fashion product name combining the base product name, futuristic English keywords, and '2076' (e.g., "MCM AERO STARK 2076").
                    - "category": An elegant, futuristic product category name in English (e.g., "Adaptive Space Mobility Bag").
-                   - "imagePrompt": A highly detailed, high-fashion English image generation prompt tailored for an AI image model (FLUX). Describe the 2076 futuristic MCM luxury product with rich details: glowing cybernetic Visetos monogram patterns, premium materials (sleek titanium, matte carbon fiber, holographic accents), 2076 future mobility context, luxury studio lighting, photorealistic, 8k resolution, cinematic commercial product shot.
+                   - "imagePrompt": A single flowing natural English description. MUST strictly start with: "Commercial studio product packshot of an empty standalone product resting on a minimalist white pedestal, strictly zero humans, no people, no models, no mannequin, no hands." Then describe the product details: blend classic cognac MCM Visetos monogram leather with futuristic translucent polymer, neon piping, matte carbon fiber, and titanium hardware based on user choices, in a clean white studio with soft diffused lighting and subtle cyan glow. High-end 8k commercial product photography.
                    - "description": A 2 to 3 sentence luxurious storytelling description in Korean. Explain seamlessly how the chosen MCM heritage DNA and the 2076 environment interact. Use a refined, premium fashion brand tone.
 
                 [JSON Output Format]

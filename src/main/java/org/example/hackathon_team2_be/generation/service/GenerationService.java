@@ -47,17 +47,17 @@ public class GenerationService {
         }
     }
 
-    // 영문 묘사문(Prompt)을 기반으로 Pollinations AI (FLUX 모델) 실시간 이미지 URL 조합
+    // 영문 묘사문(Prompt)을 기반으로 Pollinations AI (FLUX Realism 모델) 실시간 이미지 URL 조합
     private String buildPollinationsImageUrl(String prompt) {
         String effectivePrompt = (prompt != null && !prompt.isBlank())
                 ? prompt
-                : "futuristic luxury MCM cyber backpack in year 2076 with glowing Visetos patterns, titanium hardware, 8k resolution, cinematic lighting";
+                : "A standalone futuristic luxury MCM backpack in year 2076 centered on a sleek minimalist white pedestal, classic cognac Visetos monogram leather, translucent polymer, subtle glowing cyan accents, bright clean studio backdrop, soft diffused studio lighting, photorealistic 8k, crisp commercial product photography, no humans";
 
         try {
             String encodedPrompt = URLEncoder.encode(effectivePrompt, StandardCharsets.UTF_8).replace("+", "%20");
             int seed = ThreadLocalRandom.current().nextInt(1, 1_000_000);
             return String.format(
-                    "https://image.pollinations.ai/prompt/%s?model=flux&width=1024&height=1024&nologo=true&seed=%d",
+                    "https://image.pollinations.ai/prompt/%s?model=flux-realism&width=1024&height=1024&nologo=true&seed=%d",
                     encodedPrompt,
                     seed
             );
@@ -97,7 +97,7 @@ public class GenerationService {
         String dnaSummary = extractDnaSummary(request);
 
         String fallbackPrompt = String.format(
-                "futuristic luxury MCM %s in 2076 %s environment, %s, cyberpunk high fashion, 8k resolution, cinematic lighting",
+                "A standalone futuristic luxury MCM %s in 2076 %s environment centered on a sleek minimalist white pedestal, %s, translucent tech materials, bright clean studio backdrop with subtle cyan ambient glow, soft diffused lighting, photorealistic 8k, crisp commercial product photography, no humans",
                 baseName, contextName, dnaSummary
         );
         String imageUrl = buildPollinationsImageUrl(fallbackPrompt);
