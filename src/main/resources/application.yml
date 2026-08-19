@@ -1,9 +1,10 @@
 spring:
   application:
     name: hackathon_team2_be
+
   datasource:
     url: jdbc:mysql://localhost:3306/hackathon_2
-    username: root
+    username: hackathon
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -11,6 +12,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
 
 ai:
   openai:
