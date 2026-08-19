@@ -11,8 +11,12 @@ import org.example.hackathon_team2_be.generation.dto.OpenAiResultDto;
 import org.springframework.context.annotation.Fallback;
 import org.springframework.stereotype.Service;
 
+import org.example.hackathon_team2_be.domain.PresetScenario;
+import org.example.hackathon_team2_be.repository.PresetScenarioRepository;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -23,6 +27,7 @@ public class GenerationService {
 
     private final OpenAiClient openAiClient;
     private final GeminiImageClient geminiImageClient;
+    private final PresetScenarioRepository presetScenarioRepository;
 
     // AI 미래 제품 생성 함수 (특정 시나리오 프리셋 매핑 + AI 기획 및 스마트 폴백)
     public GenerationResponseDto generateFutureProduct(GenerationRequestDto request) {
@@ -107,18 +112,38 @@ public class GenerationService {
         return "Visetos, Mobility";
     }
 
-    // 특정 시나리오 프리셋 매핑 (시연용 사전 제작 이미지 및 기획 텍스트)
+    // 특정 시나리오 프리셋 매핑 (DB 우선 조회 -> 시연용 고화질 사전 제작 이미지 및 기획 텍스트)
     private GenerationResponseDto findPresetScenario(GenerationRequestDto request) {
         String productName = extractProductName(request);
         String contextName = extractContextName(request);
 
-        // 시나리오 1: Stark 백팩 계열 + Space Travel
+        // 1. DB (preset_scenarios 테이블)에서 시나리오 매칭 조회
+        if (presetScenarioRepository != null) {
+            try {
+                Optional<PresetScenario> dbPreset = presetScenarioRepository.findByMatchingNames(productName, contextName);
+                if (dbPreset.isPresent()) {
+                    PresetScenario preset = dbPreset.get();
+                    log.info("Matching preset scenario found in DB for [{} + {}]. Returning DB preset (imageUrl: {}).",
+                            productName, contextName, preset.getImageUrl());
+                    return GenerationResponseDto.builder()
+                            .productName(preset.getProductName())
+                            .category(preset.getCategory())
+                            .imageUrl(preset.getImageUrl())
+                            .description(preset.getDescription())
+                            .build();
+                }
+            } catch (Exception e) {
+                log.warn("Failed to query preset scenario from DB: {}", e.getMessage());
+            }
+        }
+
+        // 2. 기본 프리셋 (DB에 아직 데이터가 없을 때 대비한 기본값)
         if (productName.toLowerCase().contains("stark") && contextName.toLowerCase().contains("space")) {
-            log.info("Matching preset scenario found for [Stark + Space Travel]. Returning high-quality pre-generated response.");
+            log.info("Matching default preset found for [Stark + Space Travel]. Returning Postimages direct link.");
             return GenerationResponseDto.builder()
                     .productName("MCM AERO STARK 2076")
                     .category("Gravity-Defying Space Backpack")
-                    .imageUrl("/images/mcm_aero_stark_2076.png")
+                    .imageUrl("https://i.postimg.cc/HWSKZF5R/seukeulinsyas-2026-08-19-071122.png")
                     .description("MCM AERO STARK 2076은 클래식 코냑 비제토스 패턴을 기반으로 미래의 우주 여행 환경에 적합하게 재설계되었습니다. 인체공학적 수납과 가벼운 착용감을 유지하면서, 무중력 환경에서 공간을 효율적으로 활용할 수 있도록 혁신적인 기술 요소가 통합되어 있습니다.")
                     .build();
         }

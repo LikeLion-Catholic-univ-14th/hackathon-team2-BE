@@ -21,7 +21,7 @@ class GenerationControllerTest {
 
     private final OpenAiClient openAiClient = new OpenAiClient("", "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-1.5-flash", new ObjectMapper());
     private final GeminiImageClient geminiImageClient = new GeminiImageClient("", "https://generativelanguage.googleapis.com/v1beta", "gemini-2.5-flash-image", new ObjectMapper());
-    private final GenerationService generationService = new GenerationService(openAiClient, geminiImageClient);
+    private final GenerationService generationService = new GenerationService(openAiClient, geminiImageClient, null);
     private final GenerationController generationController = new GenerationController(generationService, null);
 
     @Test
@@ -53,7 +53,7 @@ class GenerationControllerTest {
         assertThat(body).isNotNull();
         assertThat(body.getProductName()).isEqualTo("MCM AERO STARK 2076");
         assertThat(body.getCategory()).isEqualTo("Gravity-Defying Space Backpack");
-        assertThat(body.getImageUrl()).isEqualTo("/images/mcm_aero_stark_2076.png");
+        assertThat(body.getImageUrl()).isEqualTo("https://i.postimg.cc/HWSKZF5R/seukeulinsyas-2026-08-19-071122.png");
         assertThat(body.getDescription()).contains("비제토스");
     }
 }
