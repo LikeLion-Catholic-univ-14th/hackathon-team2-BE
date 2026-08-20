@@ -31,7 +31,7 @@ public class Generation {
 
     private String category;
 
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
     @Column(columnDefinition = "TEXT")
