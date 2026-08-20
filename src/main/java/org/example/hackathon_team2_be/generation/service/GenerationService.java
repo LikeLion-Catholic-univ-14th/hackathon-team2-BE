@@ -34,12 +34,6 @@ public class GenerationService {
     public GenerationResponseDto generateFutureProduct(GenerationRequestDto request) {
         log.info("Starting future product generation. Request: {}", request);
 
-        // 0. 특정 시나리오 프리셋 매칭 검사 (DB 등록 프리셋 우선)
-        GenerationResponseDto presetResponse = findPresetScenario(request);
-        if (presetResponse != null) {
-            return presetResponse;
-        }
-
         OpenAiResultDto openAiResult = null;
 
         // 1. AI 디자인 기획 및 영문 프롬프트 생성 (텍스트 생성)
@@ -154,11 +148,6 @@ public class GenerationService {
 
     // Fallback (AI 호출 실패 시에도 90개 사전 제작 이미지를 100% 매칭하여 즉시 반환)
     public GenerationResponseDto buildFallbackResponse(GenerationRequestDto request) {
-        GenerationResponseDto presetResponse = findPresetScenario(request);
-        if (presetResponse != null) {
-            return presetResponse;
-        }
-
         String baseName = extractProductName(request);
         String contextName = extractContextName(request);
         String dnaSummary = extractDnaSummary(request);
