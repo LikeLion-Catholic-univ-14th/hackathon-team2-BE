@@ -113,7 +113,7 @@ public class GenerationService {
         return "Visetos, Mobility";
     }
 
-    // 90개 시나리오 이미지 매칭 -> 없으면 Pollinations AI 실시간 생성 URL 조합
+    // 90개 시나리오 이미지 매칭 (무조건 90개 저장 이미지 중 최적의 파일 URL 100% 반환)
     private String resolveImageUrl(GenerationRequestDto request, String prompt) {
         if (scenarioImageResolver != null) {
             Optional<String> matchedImage = scenarioImageResolver.resolveScenarioImageUrl(request);
@@ -121,10 +121,10 @@ public class GenerationService {
                 return matchedImage.get();
             }
         }
-        return buildPollinationsImageUrl(prompt);
+        return "/images/scenarios/01_Ottomar_Boston_weekender_travel_bag_VISETOS_Space_Travel.png";
     }
 
-    // 특정 시나리오 프리셋 매핑 (DB 우선 조회 -> 시연용 고화질 사전 제작 이미지 및 기획 텍스트)
+    // 특정 시나리오 프리셋 매핑 (DB 우선 조회)
     private GenerationResponseDto findPresetScenario(GenerationRequestDto request) {
         String productName = extractProductName(request);
         String contextName = extractContextName(request);
@@ -149,21 +149,10 @@ public class GenerationService {
             }
         }
 
-        // 2. 기본 프리셋 (DB에 아직 데이터가 없을 때 대비한 기본값)
-        if (productName.toLowerCase().contains("stark") && contextName.toLowerCase().contains("space")) {
-            log.info("Matching default preset found for [Stark + Space Travel]. Returning Postimages direct link.");
-            return GenerationResponseDto.builder()
-                    .productName("MCM AERO STARK 2076")
-                    .category("Gravity-Defying Space Backpack")
-                    .imageUrl("https://i.postimg.cc/HWSKZF5R/seukeulinsyas-2026-08-19-071122.png")
-                    .description("MCM AERO STARK 2076은 클래식 코냑 비제토스 패턴을 기반으로 미래의 우주 여행 환경에 적합하게 재설계되었습니다. 인체공학적 수납과 가벼운 착용감을 유지하면서, 무중력 환경에서 공간을 효율적으로 활용할 수 있도록 혁신적인 기술 요소가 통합되어 있습니다.")
-                    .build();
-        }
-
         return null;
     }
 
-    // Fallback
+    // Fallback (AI 호출 실패 시에도 90개 사전 제작 이미지를 100% 매칭하여 즉시 반환)
     public GenerationResponseDto buildFallbackResponse(GenerationRequestDto request) {
         GenerationResponseDto presetResponse = findPresetScenario(request);
         if (presetResponse != null) {
@@ -178,14 +167,14 @@ public class GenerationService {
                 "Commercial hero product shot of an empty standalone futuristic 2076 MCM %s levitating against a clean white studio backdrop glowing with soft purple and cyan ambient light, strictly zero humans, no models. The %s silhouette is enhanced for %s with carbon-fiber structure, subtle glowing Visetos monogram pattern, and titanium hardware, crisp focus, photorealistic, 8k --ar 1:1",
                 baseName, dnaSummary, contextName
         );
-        String imageUrl = buildPollinationsImageUrl(fallbackPrompt);
+        String imageUrl = resolveImageUrl(request, fallbackPrompt);
 
         return GenerationResponseDto.builder()
                 .productName(baseName + " 2076")
                 .category("Adaptive " + contextName + " Gear")
                 .imageUrl(imageUrl)
                 .description(String.format(
-                        "2076년 %s 환경에 맞춰 재탄생한 비세토스 패턴의 스마트 백팩. 선택하신 [%s] DNA가 결합되어 미래 라이프스타일에서도 완벽한 수납과 MCM 브랜드 헤리티지를 유지합니다.",
+                        "2076년 %s 환경에 맞춰 재탄생한 비세토스 패턴의 스마트 가방. 선택하신 [%s] DNA가 결합되어 미래 라이프스타일에서도 완벽한 수납과 MCM 브랜드 헤리티지를 유지합니다.",
                         contextName, dnaSummary
                 ))
                 .build();

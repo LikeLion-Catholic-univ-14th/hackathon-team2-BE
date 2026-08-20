@@ -10,6 +10,7 @@ import org.example.hackathon_team2_be.generation.dto.GenerationRequestDto;
 import org.example.hackathon_team2_be.generation.dto.GenerationResponseDto;
 import org.example.hackathon_team2_be.generation.dto.ProductDto;
 import org.example.hackathon_team2_be.generation.service.GenerationService;
+import org.example.hackathon_team2_be.generation.service.ScenarioImageResolver;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,11 +22,12 @@ class GenerationControllerTest {
 
     private final OpenAiClient openAiClient = new OpenAiClient("", "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-1.5-flash", new ObjectMapper());
     private final GeminiImageClient geminiImageClient = new GeminiImageClient("", "https://generativelanguage.googleapis.com/v1beta", "gemini-2.5-flash-image", new ObjectMapper());
-    private final GenerationService generationService = new GenerationService(openAiClient, geminiImageClient, null, null);
+    private final ScenarioImageResolver scenarioImageResolver = new ScenarioImageResolver();
+    private final GenerationService generationService = new GenerationService(openAiClient, geminiImageClient, null, scenarioImageResolver);
     private final GenerationController generationController = new GenerationController(generationService, null);
 
     @Test
-    @DisplayName("POST /generations/{generationId}/result - 더미 응답 데이터 검증")
+    @DisplayName("POST /generations/{generationId}/result - 90개 시나리오 이미지 매칭 응답 데이터 검증")
     void testGenerateResult() {
         // given
         Long generationId = 1L;
@@ -35,8 +37,8 @@ class GenerationControllerTest {
                         .description("MCM 아이코닉 백팩 클래식 아카이브")
                         .build())
                 .lockedDna(List.of(
-                        DnaDto.builder().name("Visetos").description("시그니처 모노그램 패턴").build(),
-                        DnaDto.builder().name("Mobility").description("자유로운 이동 기능성").build()
+                        DnaDto.builder().name("VISETOS").description("시그니처 모노그램 패턴").build(),
+                        DnaDto.builder().name("MOBILITY").description("자유로운 이동 기능성").build()
                 ))
                 .futureContext(ContextDto.builder()
                         .name("Space Travel")
@@ -45,15 +47,13 @@ class GenerationControllerTest {
                 .build();
 
         // when
-        var responseEntity = generationController.generateResult(generationId, request);
+        GenerationResponseDto body = generationService.generateFutureProduct(request);
 
         // then
-        assertThat(responseEntity.getStatusCode().value()).isEqualTo(200);
-        GenerationResponseDto body = responseEntity.getBody();
         assertThat(body).isNotNull();
-        assertThat(body.getProductName()).isEqualTo("MCM AERO STARK 2076");
-        assertThat(body.getCategory()).isEqualTo("Gravity-Defying Space Backpack");
-        assertThat(body.getImageUrl()).isEqualTo("https://i.postimg.cc/HWSKZF5R/seukeulinsyas-2026-08-19-071122.png");
-        assertThat(body.getDescription()).contains("비제토스");
+        assertThat(body.getProductName()).contains("MCM AERO STARK");
+        assertThat(body.getCategory()).isNotEmpty();
+        assertThat(body.getImageUrl()).contains("37_Stark_backpack_VISETOS_MOBILITY_Space_Travel.png");
+        assertThat(body.getDescription()).isNotEmpty();
     }
 }

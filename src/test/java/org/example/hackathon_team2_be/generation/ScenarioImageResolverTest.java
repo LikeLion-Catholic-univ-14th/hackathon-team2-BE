@@ -21,7 +21,6 @@ class ScenarioImageResolverTest {
     @BeforeEach
     void setUp() {
         resolver = new ScenarioImageResolver();
-        resolver.init();
     }
 
     @Test
