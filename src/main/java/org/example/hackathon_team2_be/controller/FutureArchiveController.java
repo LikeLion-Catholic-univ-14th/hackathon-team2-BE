@@ -49,7 +49,7 @@ public class FutureArchiveController {
     // Future Archive 상세 조회
     @GetMapping("/future-archives/{id}")
     public ResponseEntity<GenerationResponse> getFutureArchive(
-            @PathVariable Long generationId
+            @PathVariable("id") Long generationId
     ) {
 
         return ResponseEntity.ok(
