@@ -140,14 +140,34 @@ public class FutureArchiveService {
             );
         }
 
-        // TODO:
-        // HeritageDnaRepository + FutureContextRepository 연결 후
-        // lockedDna / futureContext 조회
+        // 해당 generation의 locked DNA 조회
+        List<GenerationLockedDna> lockedDnas =
+                generationLockedDnaRepository
+                        .findAllByIdGenerationId(generation.getId());
+
+        List<String> lockedDnaNames = lockedDnas.stream()
+                .map(dna -> heritageDnaRepository.findById(
+                        dna.getId().getHeritageDnaId()
+                ))
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
+                .map(HeritageDna::getName)
+                .toList();
+
+        // Future Context 조회
+        FutureContext futureContext =
+                futureContextRepository.findById(
+                        generation.getFutureContextId()
+                ).orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Future Context를 찾을 수 없습니다."
+                        )
+                );
 
         return GenerationResponse.completed(
                 generation,
-                null,
-                null
+                lockedDnaNames,
+                futureContext.getName()
         );
     }
 }
