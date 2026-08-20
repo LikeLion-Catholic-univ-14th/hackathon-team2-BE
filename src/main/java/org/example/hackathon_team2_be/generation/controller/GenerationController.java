@@ -43,11 +43,41 @@ public class GenerationController {
     public ResponseEntity<ApiResponse<GenerationCreateResponse>> createGeneration(
             @RequestBody GenerationCreateRequest request
     ) {
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        generationDbService.createGeneration(request)
-                )
-        );
+        // 1. DB에 GENERATING 상태로 생성
+        GenerationCreateResponse generation =
+                generationDbService.createGeneration(request);
+
+        try {
+            // 2. AI가 사용할 요청 데이터로 변환
+            GenerationRequestDto aiRequest =
+                    generationDbService.createAiRequest(request);
+
+            // 3. AI 생성
+            GenerationResponseDto aiResponse =
+                    generationService.generateFutureProduct(aiRequest);
+
+            // 4. 결과를 DB에 저장
+            generationDbService.completeGeneration(
+                    generation.getGenerationId(),
+                    aiResponse
+            );
+
+            // 5. 생성 ID 반환
+            return ResponseEntity.ok(
+                    ApiResponse.success(generation)
+            );
+
+        } catch (Exception e) {
+            log.error(
+                    "Generation failed. generationId={}",
+                    generation.getGenerationId(),
+                    e
+            );
+
+            return ResponseEntity.ok(
+                    ApiResponse.success(generation)
+            );
+        }
     }
 
     @GetMapping("/{generationId}")

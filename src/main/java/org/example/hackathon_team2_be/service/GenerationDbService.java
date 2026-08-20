@@ -6,6 +6,7 @@ import org.example.hackathon_team2_be.dto.AiGenerationResponse;
 import org.example.hackathon_team2_be.dto.GenerationCreateRequest;
 import org.example.hackathon_team2_be.dto.GenerationCreateResponse;
 import org.example.hackathon_team2_be.dto.GenerationResponse;
+import org.example.hackathon_team2_be.generation.dto.*;
 import org.example.hackathon_team2_be.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,17 +120,15 @@ public class GenerationDbService {
     }
 
 
-    //AI 생성 결과 받는 부분
+
     @Transactional
     public void completeGeneration(
             Long generationId,
-            AiGenerationResponse response
+            GenerationResponseDto response
     ) {
         Generation generation = generationRepository.findById(generationId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "생성 결과를 찾을 수 없습니다."
-                        )
+                        new IllegalArgumentException("생성 결과를 찾을 수 없습니다.")
                 );
 
         generation.complete(
@@ -138,6 +137,59 @@ public class GenerationDbService {
                 response.getImageUrl(),
                 response.getDescription()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public GenerationRequestDto createAiRequest(
+            GenerationCreateRequest request
+    ) {
+        // 상품 조회
+        ArchiveProduct product = archiveProductRepository
+                .findById(request.getArchiveProductId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("상품을 찾을 수 없습니다.")
+                );
+
+        // Future Context 조회
+        FutureContext futureContext = futureContextRepository
+                .findById(request.getFutureContextId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Future Context를 찾을 수 없습니다.")
+                );
+
+        // ProductDto 변환
+        ProductDto productDto = ProductDto.builder()
+                .name(product.getName())
+                .description(product.getShortDescription())
+                .build();
+
+        // ContextDto 변환
+        ContextDto contextDto = ContextDto.builder()
+                .name(futureContext.getName())
+                .description(futureContext.getDescription())
+                .build();
+
+        // DnaDto 변환
+        List<DnaDto> dnaDtos = request.getLockedDnaIds()
+                .stream()
+                .map(id -> heritageDnaRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "heritage dna를 찾을 수 없습니다. id=" + id
+                                )
+                        ))
+                .map(dna -> DnaDto.builder()
+                        .name(dna.getName())
+                        .description(dna.getDescription())
+                        .build())
+                .toList();
+
+        // GenerationRequestDto 생성
+        return GenerationRequestDto.builder()
+                .product(productDto)
+                .lockedDna(dnaDtos)
+                .futureContext(contextDto)
+                .build();
     }
 
 }
