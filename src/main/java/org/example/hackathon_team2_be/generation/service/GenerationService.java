@@ -28,12 +28,13 @@ public class GenerationService {
     private final OpenAiClient openAiClient;
     private final GeminiImageClient geminiImageClient;
     private final PresetScenarioRepository presetScenarioRepository;
+    private final ScenarioImageResolver scenarioImageResolver;
 
-    // AI 미래 제품 생성 함수 (특정 시나리오 프리셋 매핑 + AI 기획 및 스마트 폴백)
+    // AI 미래 제품 생성 함수 (90개 시나리오 이미지 매칭 + AI 기획 및 스마트 폴백)
     public GenerationResponseDto generateFutureProduct(GenerationRequestDto request) {
         log.info("Starting future product generation. Request: {}", request);
 
-        // 0. 특정 시나리오 프리셋 매칭 검사 (시연용 고화질 사전 제작 이미지 및 텍스트 매핑)
+        // 0. 특정 시나리오 프리셋 매칭 검사 (DB 등록 프리셋 우선)
         GenerationResponseDto presetResponse = findPresetScenario(request);
         if (presetResponse != null) {
             return presetResponse;
@@ -56,9 +57,9 @@ public class GenerationService {
             return buildFallbackResponse(request);
         }
 
-        // 2. Pollinations AI (FLUX Realism 모델) 무료 실시간 고화질 이미지 URL 생성
-        String imageUrl = buildPollinationsImageUrl(openAiResult.getImagePrompt());
-        log.info("Successfully generated real-time FLUX image URL: {}", imageUrl);
+        // 2. 90개 사전 제작 이미지 매칭 (매칭 실패 시 Pollinations AI 실시간 생성)
+        String imageUrl = resolveImageUrl(request, openAiResult.getImagePrompt());
+        log.info("Resolved final product image URL: {}", imageUrl);
 
         // 3. 최종 응답 반환
         return GenerationResponseDto.builder()
@@ -110,6 +111,17 @@ public class GenerationService {
                     .collect(Collectors.joining(", "));
         }
         return "Visetos, Mobility";
+    }
+
+    // 90개 시나리오 이미지 매칭 -> 없으면 Pollinations AI 실시간 생성 URL 조합
+    private String resolveImageUrl(GenerationRequestDto request, String prompt) {
+        if (scenarioImageResolver != null) {
+            Optional<String> matchedImage = scenarioImageResolver.resolveScenarioImageUrl(request);
+            if (matchedImage.isPresent()) {
+                return matchedImage.get();
+            }
+        }
+        return buildPollinationsImageUrl(prompt);
     }
 
     // 특정 시나리오 프리셋 매핑 (DB 우선 조회 -> 시연용 고화질 사전 제작 이미지 및 기획 텍스트)

@@ -21,7 +21,7 @@ class GenerationControllerTest {
 
     private final OpenAiClient openAiClient = new OpenAiClient("", "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-1.5-flash", new ObjectMapper());
     private final GeminiImageClient geminiImageClient = new GeminiImageClient("", "https://generativelanguage.googleapis.com/v1beta", "gemini-2.5-flash-image", new ObjectMapper());
-    private final GenerationService generationService = new GenerationService(openAiClient, geminiImageClient, null);
+    private final GenerationService generationService = new GenerationService(openAiClient, geminiImageClient, null, null);
     private final GenerationController generationController = new GenerationController(generationService, null);
 
     @Test
