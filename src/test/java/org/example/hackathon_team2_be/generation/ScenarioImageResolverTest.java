@@ -54,7 +54,7 @@ class ScenarioImageResolverTest {
 
         Optional<String> url = resolver.resolveScenarioImageUrl(request);
         assertThat(url).isPresent();
-        assertThat(url.get()).contains("46_Stark_backpack_VISETOS_METAL STUDS_Hyper_City.png");
+        assertThat(url.get()).contains("46_Stark_backpack_VISETOS_METAL%20STUDS_Hyper_City.png");
     }
 
     @Test
@@ -71,6 +71,6 @@ class ScenarioImageResolverTest {
 
         Optional<String> url = resolver.resolveScenarioImageUrl(request);
         assertThat(url).isPresent();
-        assertThat(url.get()).contains("86_crossbody_pouch_bag_VISETOS_MIAMI BLUE_Virtual_Dimension.png");
+        assertThat(url.get()).contains("86_crossbody_pouch_bag_VISETOS_MIAMI%20BLUE_Virtual_Dimension.png");
     }
 }

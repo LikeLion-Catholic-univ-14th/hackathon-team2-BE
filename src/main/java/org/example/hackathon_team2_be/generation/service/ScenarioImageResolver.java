@@ -132,7 +132,7 @@ public class ScenarioImageResolver {
             }
 
             if (dnaKeys.isEmpty()) {
-                return Optional.of("/images/scenarios/" + fileName);
+                return Optional.of(buildImageUrl(fileName));
             }
 
             boolean allDnaMatch = true;
@@ -147,7 +147,7 @@ public class ScenarioImageResolver {
                 long dnaCountInFile = countDnaMatches(upperFileName, productKey);
                 if (dnaCountInFile == dnaKeys.size()) {
                     log.info("Exact scenario image matched: {}", fileName);
-                    return Optional.of("/images/scenarios/" + fileName);
+                    return Optional.of(buildImageUrl(fileName));
                 }
             }
         }
@@ -180,7 +180,7 @@ public class ScenarioImageResolver {
 
         if (bestMatch != null) {
             log.info("Best-effort scenario image matched: {}", bestMatch);
-            return Optional.of("/images/scenarios/" + bestMatch);
+            return Optional.of(buildImageUrl(bestMatch));
         }
 
         // 3. Fallback: 해당 제품+환경의 첫 번째 파일 무조건 반환
@@ -188,11 +188,17 @@ public class ScenarioImageResolver {
             String upperFileName = normalize(fileName);
             if (upperFileName.contains(normalize(productKey)) && upperFileName.contains(normalize(contextKey))) {
                 log.info("Product/Context fallback scenario image matched: {}", fileName);
-                return Optional.of("/images/scenarios/" + fileName);
+                return Optional.of(buildImageUrl(fileName));
             }
         }
 
-        return Optional.of("/images/scenarios/" + ALL_SCENARIOS.get(0));
+        return Optional.of(buildImageUrl(ALL_SCENARIOS.get(0)));
+    }
+
+    // 파일명을 변경하지 않고도 웹 브라우저에서 스페이스바(공백)를 안전하게 인식할 수 있도록 URL 인코딩
+    private String buildImageUrl(String fileName) {
+        if (fileName == null) return "/images/scenarios/01_Ottomar_Boston_weekender_travel_bag_VISETOS_Space_Travel.png";
+        return "/images/scenarios/" + fileName.replace(" ", "%20");
     }
 
     private String normalize(String str) {
