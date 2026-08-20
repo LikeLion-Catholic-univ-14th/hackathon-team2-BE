@@ -22,64 +22,69 @@ public class GenerationController {
     private final GenerationService generationService;
     private final GenerationDbService generationDbService;
 
+    // AI 백엔드 → 메인 백엔드
+    // AI 생성 결과 전달
     @PostMapping("/{generationId}/result")
-    public ResponseEntity<GenerationResponseDto> generateResult(
+    public ResponseEntity<Void> receiveGenerationResult(
             @PathVariable Long generationId,
-            @RequestBody GenerationRequestDto request
+            @RequestBody GenerationResponseDto response
     ) {
-        log.info("Received generation request for generationId: {}", generationId);
-        try {
-            GenerationResponseDto response = generationService.generateFutureProduct(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Unhandled Exception in GenerationController for generationId: {}. Returning Fallback response.", generationId, e);
-            GenerationResponseDto fallbackResponse = generationService.buildFallbackResponse(request);
-            return ResponseEntity.ok(fallbackResponse);
-        }
+        log.info(
+                "Received AI generation result. generationId={}",
+                generationId
+        );
+
+        generationDbService.completeGeneration(
+                generationId,
+                response
+        );
+
+        return ResponseEntity.ok().build();
     }
 
-    //추가
-    @PostMapping
-    public ResponseEntity<ApiResponse<GenerationCreateResponse>> createGeneration(
-            @RequestBody GenerationCreateRequest request
-    ) {
-        // 1. DB에 GENERATING 상태로 생성
-        GenerationCreateResponse generation =
-                generationDbService.createGeneration(request);
 
-        try {
-            // 2. AI가 사용할 요청 데이터로 변환
-            GenerationRequestDto aiRequest =
-                    generationDbService.createAiRequest(request);
+        //추가
+        @PostMapping
+        public ResponseEntity<ApiResponse<GenerationCreateResponse>> createGeneration(
+                @RequestBody GenerationCreateRequest request
+        ) {
+            GenerationCreateResponse generation =
+                    generationDbService.createGeneration(request);
 
-            // 3. AI 생성
-            GenerationResponseDto aiResponse =
-                    generationService.generateFutureProduct(aiRequest);
+            try {
+                GenerationRequestDto aiRequest =
+                        generationDbService.createAiRequest(request);
 
-            // 4. 결과를 DB에 저장
-            generationDbService.completeGeneration(
-                    generation.getGenerationId(),
-                    aiResponse
-            );
+                GenerationResponseDto aiResponse =
+                        generationService.generateFutureProduct(aiRequest);
 
-            // 5. 생성 ID 반환
-            return ResponseEntity.ok(
-                    ApiResponse.success(generation)
-            );
+                generationDbService.completeGeneration(
+                        generation.getGenerationId(),
+                        aiResponse
+                );
 
-        } catch (Exception e) {
-            log.error(
-                    "Generation failed. generationId={}",
-                    generation.getGenerationId(),
-                    e
-            );
+                return ResponseEntity.ok(
+                        ApiResponse.success(generation)
+                );
 
-            return ResponseEntity.ok(
-                    ApiResponse.success(generation)
-            );
+            } catch (Exception e) {
+                log.error(
+                        "Generation failed. generationId={}",
+                        generation.getGenerationId(),
+                        e
+                );
+
+                generationDbService.failGeneration(
+                        generation.getGenerationId()
+                );
+
+                return ResponseEntity.ok(
+                        ApiResponse.success(generation)
+                );
+            }
         }
-    }
 
+    // 생성 결과 조회
     @GetMapping("/{generationId}")
     public ResponseEntity<ApiResponse<GenerationResponse>> getGeneration(
             @PathVariable Long generationId
@@ -90,4 +95,5 @@ public class GenerationController {
                 )
         );
     }
+
 }

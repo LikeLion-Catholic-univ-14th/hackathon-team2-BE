@@ -192,4 +192,14 @@ public class GenerationDbService {
                 .build();
     }
 
+    @Transactional
+    public void failGeneration(Long generationId) {
+        Generation generation = generationRepository.findById(generationId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("생성 결과를 찾을 수 없습니다.")
+                );
+
+        generation.fail();
+    }
+
 }
